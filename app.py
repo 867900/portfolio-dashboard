@@ -12,8 +12,19 @@ st.caption("Based on 5 years of daily data from Yahoo Finance. Past performance 
 tickers_input = st.text_input("Enter stock tickers, separated by commas (e.g., AAPL, MSFT, GOOGL):")
 tickers = tickers_input.split(",")
 tickers = [t.strip().upper() for t in tickers]
+if len(tickers) < 2:
+    st.warning("Please enter at least 2 tickers to build a portfolio.")
+    st.stop()
 if st.button("Run Analysis"):
     data = yf.download(tickers, period="5y")["Close"]
+    if data.empty:
+        st.error("No data could be retrieved. Check your ticker symbols.")
+        st.stop()
+
+    invalid = [t for t in data.columns if data[t].isna().all()]
+    if invalid:
+        st.error(f"No data found for: {', '.join(invalid)}. Check the spelling.")
+        st.stop()
     returns = data.pct_change()
     mean_returns = returns.mean()
     covariance = returns.cov()
